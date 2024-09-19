@@ -1,0 +1,53 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+
+    - name: Build
+      run: go build -v ./...
+
+  tests:
+    # Задание "tests" зависит от задания "build" и будет выполнено после него
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+
+    - name: Test
+      run: go test -v ./...
+
+  # Задание проверяет наличие в коде состояния гонки
+  tests-race:
+    # Задание "tests-race" зависит от задания "build" и будет выполнено после него
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v4
+
+    - name: Test
+      run: go test -race -v ./...
+  
+  # Задание проверяет код на соответствие стилю и отсутствие логических ошибок
+  lint:
+    # Задание "lint" зависит от заданий "tests" и "tests-race" и будет выполнено после них
+    needs: [tests, tests-race]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+      # Используется действие "golangci/golangci-lint-action@v3", которое запускает линтер. Он проверит код на соответствие стилю и отсутствие логических ошибок
+      - uses: golangci/golangci-lint-action@v3
